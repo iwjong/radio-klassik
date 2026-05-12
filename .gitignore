@@ -1,0 +1,11 @@
+.DS_Store
+*.log
+npm-debug.log*
+
+# klassik-globe (app)
+klassik-globe/node_modules/
+klassik-globe/dist/
+klassik-globe/dist-ssr/
+klassik-globe/.env
+klassik-globe/.env.local
+klassik-globe/.env.*.local
