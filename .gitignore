@@ -1,14 +1,28 @@
-.DS_Store
+# Logs
+logs
 *.log
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# Web app (Vite + React)
-radio-klassik/node_modules/
-radio-klassik/dist/
-radio-klassik/dist-ssr/
-radio-klassik/.env
-radio-klassik/.env.local
-radio-klassik/.env.*.local
+node_modules
+dist
+dist-ssr
+.vite
+*.local
 
-# Old app path: dev tools may recreate this folder with only Vite cache
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Old nested app path (dev tools may recreate with only Vite cache)
 klassik-globe/
