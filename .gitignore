@@ -2,10 +2,13 @@
 *.log
 npm-debug.log*
 
-# klassik-globe (app)
-klassik-globe/node_modules/
-klassik-globe/dist/
-klassik-globe/dist-ssr/
-klassik-globe/.env
-klassik-globe/.env.local
-klassik-globe/.env.*.local
+# Web app (Vite + React)
+radio-klassik/node_modules/
+radio-klassik/dist/
+radio-klassik/dist-ssr/
+radio-klassik/.env
+radio-klassik/.env.local
+radio-klassik/.env.*.local
+
+# Old app path: dev tools may recreate this folder with only Vite cache
+klassik-globe/

@@ -42,7 +42,7 @@ export function minZoomToAvoidHorizontalWorldRepeat(widthCssPx: number): number 
 export function getGoogleMapsScriptUrl(apiKey: string): string {
   const params = new URLSearchParams({
     key: apiKey,
-    callback: "initKlassikGoogleMaps",
+    callback: "initRadioKlassikMaps",
     v: "weekly",
   });
   return `https://maps.googleapis.com/maps/api/js?${params.toString()}`;

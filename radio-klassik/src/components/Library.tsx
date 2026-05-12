@@ -80,7 +80,7 @@ export function Library({ onClose }: Props) {
               Library
             </div>
             <div className="font-display text-2xl leading-tight text-white">
-              Your Klassik
+              Your Radio Klassik
             </div>
           </div>
           <button

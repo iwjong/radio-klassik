@@ -23,7 +23,7 @@ describe("metadata normalization", () => {
   it("extracts composer, work, and orchestra from compact classical metadata", () => {
     const parsed = parseNowPlaying(
       "BEETHOVEN - SYMPHONY NO.5 - BERLIN PHILHARMONIC",
-      "Klassik Globe",
+      "Radio Klassik",
     );
 
     expect(parsed).toMatchObject({
@@ -51,7 +51,7 @@ describe("metadata normalization", () => {
   it("extracts catalog numbers, movement, orchestra, and conductor", () => {
     const parsed = parseNowPlaying(
       "BRAHMS - SYMPHONY NO. 3 IN F MAJOR, OP. 90 - III. POCO ALLEGRETTO - BERLIN PHILHARMONIC - cond. Claudio Abbado",
-      "Klassik Globe",
+      "Radio Klassik",
     );
 
     expect(parsed).toMatchObject({

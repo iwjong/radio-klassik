@@ -1,16 +1,16 @@
-# Klassik Globe
+# Radio Klassik
 
 A calm spatial listening experience devoted **only to classical music**.
-Choose a quiet point on the world map and tune into a curated classical
+Choose a point on the world map and tune into a curated classical
 broadcaster anywhere on Earth — Mozart at dawn in Vienna, late-night chamber
 music in Tokyo, baroque from a small relay in Bogotá.
 
-![Klassik Globe](public/favicon.svg)
+![Radio Klassik](public/favicon.svg)
 
 ## Features
 
-- 🗺️ **Minimal world map** powered by the Google Maps JavaScript API, with
-  quiet styling and tiny station points that stay secondary to the music.
+- 🗺️ **World map** powered by the Google Maps JavaScript API (default roadmap,
+  zoom controls, and classic map markers for stations).
 - 🎻 **Classical-only** — stations are pulled from
   [Radio Browser](https://www.radio-browser.info/) and filtered by
   strict classical scoring with strong negative exclusions for unrelated genres.
@@ -54,7 +54,8 @@ To enable the map locally, add a Google Maps key to `.env.local`:
 VITE_GOOGLE_MAPS_API_KEY=your-key
 ```
 
-An optional `VITE_GOOGLE_MAPS_MAP_ID` can be supplied for a cloud-styled map.
+An optional `VITE_GOOGLE_MAPS_MAP_ID` can be supplied for a cloud-styled vector map
+(legacy default markers work best without a custom `mapId`).
 Without a key the app keeps a quiet fallback background so the listening UI
 remains usable.
 
@@ -86,8 +87,8 @@ If a station is uncertain, it is excluded.
   *Stream unavailable* if that happens; pick another dot.
 - HTTPS streams are shown by default. Legacy HTTP streams can be enabled
   explicitly, but may be blocked by secure deployments.
-- Google Maps is loaded lazily and is treated as a quiet background layer,
-  not as the primary interface.
+- Google Maps is loaded on demand. Without an API key, the map area shows a
+  simple gradient fallback while the rest of the app stays usable.
 
 ## License
 

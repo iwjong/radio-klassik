@@ -18,7 +18,7 @@ export function TopBar({ onOpenSearch, onOpenLibrary, onOpenAbout }: Props) {
         <Logo />
         <div className="leading-tight">
           <div className="font-display text-2xl gradient-text tracking-wide">
-            Klassik Globe
+            Radio Klassik
           </div>
           <div className="text-[10px] tracking-[0.3em] text-white/40 uppercase">
             Spatial classical listening

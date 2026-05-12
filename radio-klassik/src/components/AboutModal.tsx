@@ -23,7 +23,7 @@ export function AboutModal({ onClose }: Props) {
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-label="About Klassik Globe"
+      aria-label="About Radio Klassik"
     >
       <div
         className="glass-strong rounded-lg p-8 w-[min(520px,92vw)] shadow-soft"
@@ -33,7 +33,7 @@ export function AboutModal({ onClose }: Props) {
           About
         </div>
         <h2 className="font-display text-3xl text-white mt-1">
-          Klassik Globe
+          Radio Klassik
         </h2>
         <p className="text-white/70 text-sm leading-relaxed mt-4">
           Spin the world and tune into classical music broadcasters

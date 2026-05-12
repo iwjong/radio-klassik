@@ -29,6 +29,6 @@ describe("google map style", () => {
 
     expect(url.origin).toBe("https://maps.googleapis.com");
     expect(url.searchParams.get("key")).toBe("test-key");
-    expect(url.searchParams.get("callback")).toBe("initKlassikGoogleMaps");
+    expect(url.searchParams.get("callback")).toBe("initRadioKlassikMaps");
   });
 });

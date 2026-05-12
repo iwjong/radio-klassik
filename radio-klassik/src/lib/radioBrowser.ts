@@ -4,7 +4,7 @@ import { applyCuratedStationLayer } from "./curatedStations";
 
 const DISCOVERY_URL = "https://all.api.radio-browser.info/json/servers";
 const DEFAULT_MIRRORS = ["https://de1.api.radio-browser.info"];
-const LAST_MIRROR_KEY = "klassik-globe:last-radio-browser-mirror";
+const LAST_MIRROR_KEY = "radio-klassik:last-radio-browser-mirror";
 const DEFAULT_TIMEOUT_MS = 8500;
 const CLASSICAL_SCORE_THRESHOLD = 6;
 
@@ -392,7 +392,7 @@ async function fetchWithTimeout(
       ...init,
       signal: controller.signal,
       headers: {
-        "User-Agent": "Klassik-Globe/1.0",
+        "User-Agent": "Radio-Klassik/1.0",
         ...(init.headers || {}),
       },
     });

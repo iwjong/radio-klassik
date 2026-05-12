@@ -78,13 +78,13 @@ interface GoogleMapsApi {
 
 declare global {
   interface Window {
-    __klassikGoogleMapsPromise?: Promise<GoogleMapsApi>;
+    __radioKlassikGoogleMapsPromise?: Promise<GoogleMapsApi>;
     google?: GoogleMapsApi;
-    initKlassikGoogleMaps?: () => void;
+    initRadioKlassikMaps?: () => void;
   }
 }
 
-const GOOGLE_MAPS_SCRIPT_ID = "klassik-google-maps-script";
+const GOOGLE_MAPS_SCRIPT_ID = "radio-klassik-google-maps-script";
 
 type LoadState = "loading" | "ready" | "missing-key" | "error";
 
@@ -261,11 +261,11 @@ function loadGoogleMapsApi(): Promise<GoogleMapsApi> {
   if (!apiKey) {
     return Promise.reject(new Error("Google Maps API key is not configured."));
   }
-  if (window.__klassikGoogleMapsPromise) {
-    return window.__klassikGoogleMapsPromise;
+  if (window.__radioKlassikGoogleMapsPromise) {
+    return window.__radioKlassikGoogleMapsPromise;
   }
 
-  window.__klassikGoogleMapsPromise = new Promise((resolve, reject) => {
+  window.__radioKlassikGoogleMapsPromise = new Promise((resolve, reject) => {
     let pollId: number | undefined;
 
     const cleanup = () => {
@@ -276,7 +276,7 @@ function loadGoogleMapsApi(): Promise<GoogleMapsApi> {
     const fail = (error: Error) => {
       cleanup();
       document.getElementById(GOOGLE_MAPS_SCRIPT_ID)?.remove();
-      window.__klassikGoogleMapsPromise = undefined;
+      window.__radioKlassikGoogleMapsPromise = undefined;
       reject(error);
     };
 
@@ -289,7 +289,7 @@ function loadGoogleMapsApi(): Promise<GoogleMapsApi> {
       fail(new Error("Google Maps timed out while loading."));
     }, 10000);
 
-    window.initKlassikGoogleMaps = () => {
+    window.initRadioKlassikMaps = () => {
       if (window.google?.maps) {
         succeed(window.google);
       } else {
@@ -324,7 +324,7 @@ function loadGoogleMapsApi(): Promise<GoogleMapsApi> {
     document.head.appendChild(script);
   });
 
-  return window.__klassikGoogleMapsPromise;
+  return window.__radioKlassikGoogleMapsPromise;
 }
 
 function getGoogleMapOptions(): GoogleMapOptions {
