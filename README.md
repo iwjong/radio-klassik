@@ -1,45 +1,46 @@
 # Radio Klassik
 
-This repository is a single **Vite + React** app at the **root** — run `npm install` and `npm run dev` here.
+## Overview
 
-A calm spatial listening experience devoted **only to classical music**.
-Choose a point on the world map and tune into a curated classical
-broadcaster anywhere on Earth — Mozart at dawn in Vienna, late-night chamber
-music in Tokyo, baroque from a small relay in Bogotá.
+As someone who loves classical music and lives abroad, I first made this project to listen to **radio from the Republic of Korea** while overseas. It has since grown into a way to **explore and stream classical radio stations worldwide**. The map-first interaction is inspired by [Radio Garden](https://radio.garden/)—tune the world by place—while the catalogue stays focused on classical music.
 
-![Radio Klassik](public/favicon.svg)
+This repository is a **Vite + React** app at the root (`npm install`, `npm run dev`). Stations and metadata come from [Radio Browser](https://www.radio-browser.info/); you choose a broadcaster from its **Google Maps** marker and play the stream.
+
+## Google Maps
+
+The map is built with the **[Maps JavaScript API](https://developers.google.com/maps/documentation/javascript)** (weekly channel). Implementation lives in `src/components/map/GoogleMapBackground.tsx` and `src/components/map/googleMapStyle.ts`.
+
+**Loading.** The browser loads `https://maps.googleapis.com/maps/api/js` with your API key and a global callback (`initRadioKlassikMaps`). The loader deduplicates the script and handles timeouts; see `loadGoogleMapsApi()` in `GoogleMapBackground.tsx`.
+
+**Credentials.** Set `VITE_GOOGLE_MAPS_API_KEY` in `.env.local` (see [Get API key](https://developers.google.com/maps/documentation/javascript/get-api-key)). In Google Cloud: enable **Maps JavaScript API**, attach a **billing account**, and (if you use HTTP referrer restrictions on the key) add referrer patterns for every origin where this app is served.
+
+**Map behaviour.** The map uses the default **roadmap** basemap with the standard control strip (zoom, map type, scale, fullscreen, Street View). Scroll wheel and keyboard shortcuts are enabled. Station locations use the classic **`google.maps.Marker`** default pin, with `optimized: false` so pins stay visible on the default raster-style map. The app does **not** pass a Cloud `mapId` into `Map` while using these legacy markers (a vector `mapId` can hide or break default pins; optional `VITE_GOOGLE_MAPS_MAP_ID` in config is reserved for a future **Advanced Marker** setup).
+
+**Zoom limits.** `googleMapsConfig` defines `minZoomFloor`, `maxZoom`, and `defaultZoom`. On resize, a **minimum zoom** is recomputed from the map container width so the world does not tile horizontally into repeated strips at very low zoom; see `minZoomToAvoidHorizontalWorldRepeat()` in `googleMapStyle.ts`.
+
+**Without a key.** If `VITE_GOOGLE_MAPS_API_KEY` is missing, the map script is not loaded and a simple gradient placeholder is shown; the player and library UI still work.
 
 ## Features
 
-- 🗺️ **World map** powered by the Google Maps JavaScript API (default roadmap,
-  zoom controls, and classic map markers for stations).
-- 🎻 **Classical-only** — stations are pulled from
-  [Radio Browser](https://www.radio-browser.info/) and filtered by
-  strict classical scoring with strong negative exclusions for unrelated genres.
-- 🔊 **Editorial player** with refined now-playing metadata, Focus Mode,
-  play / pause, prev / next, volume and calm loading / error states.
-- 🧭 **Verified station identity** for curated labels, editorial descriptions,
-  preferred coordinates and metadata cleanup.
-- ⭐ **Favorites & Recent** — persisted in `localStorage`.
-- 🔎 **Spotlight-style search** by station name, country, country code or tag
-  (`/` or `S` to open).
-- 📚 **Library panel** with Favorites · Recently played · Top voted · By
-  country views.
-- ⌨️ **Keyboard shortcuts**: `Space` play/pause · `← / →` next/prev ·
-  `↑ / ↓` volume · `F` favorite · `/` or `S` search · `L` library.
-- 📍 **Smart fallback geocoding** — stations without GPS coordinates are
-  placed at their country centroid with deterministic jitter so they
-  don't stack.
+- **Google Map** — roadmap, pan/zoom, default red markers per station, click to select.
+- **Classical-only catalogue** — [Radio Browser](https://www.radio-browser.info/) with strict scoring and exclusions for non-classical noise.
+- **Player** — play/pause, previous/next, volume, Focus Mode, now-playing metadata handling.
+- **Curated stations** — verified labels, editorial copy, preferred coordinates where applicable.
+- **Favorites and recent** — persisted in `localStorage` (Zustand persist key `radio-klassik-v1`).
+- **Search** — station name, country, code, tag; open with `/` or `S`.
+- **Library** — favorites, recently played, top voted, grouped by country.
+- **Keyboard** — `Space` play/pause, `←` / `→` station, `↑` / `↓` volume, `F` favorite, `/` or `S` search, `L` library, `Escape` closes panels.
+- **Geocoding** — stations missing coordinates are placed on a country centroid with deterministic jitter to reduce overlap.
 
 ## Tech stack
 
-| Layer    | Library |
-| -------- | ------- |
-| Build    | Vite 8 + TypeScript |
-| UI       | React 19, TailwindCSS 3 |
-| Map      | Google Maps JavaScript API |
-| State    | Zustand (with persistence) |
-| Data     | [Radio Browser](https://www.radio-browser.info/) public API |
+| Layer | Technology |
+| ----- | ---------- |
+| Build | Vite 8, TypeScript |
+| UI | React 19, Tailwind CSS 3 |
+| Map | Google Maps JavaScript API |
+| State | Zustand (with persistence) |
+| Data | Radio Browser public API |
 
 ## Getting started
 
@@ -48,51 +49,40 @@ npm install
 npm run dev
 ```
 
-Then open <http://localhost:5173>.
+After `npm run dev`, use the URL printed in the terminal (Vite chooses the port).
 
-To enable the map locally, add a Google Maps key to `.env.local`:
+Create `.env.local` in the repo root:
 
 ```bash
-VITE_GOOGLE_MAPS_API_KEY=your-key
+VITE_GOOGLE_MAPS_API_KEY=your-key-here
 ```
 
-An optional `VITE_GOOGLE_MAPS_MAP_ID` can be supplied for a cloud-styled vector map
-(legacy default markers work best without a custom `mapId`).
-Without a key the app keeps a quiet fallback background so the listening UI
-remains usable.
+Optional: `VITE_GOOGLE_MAPS_MAP_ID` — only relevant if you later move to vector styling and **AdvancedMarkerElement**; default pins are tuned for **no** `mapId` on the `Map` constructor.
 
 ### Scripts
 
-- `npm run dev` — local dev server with HMR
-- `npm run build` — TypeScript check + production bundle to `dist/`
-- `npm run preview` — serve the built bundle locally
+- `npm run dev` — dev server with HMR
+- `npm run build` — typecheck and production build to `dist/`
+- `npm run preview` — serve the production build locally
 - `npm run lint` — ESLint
-- `npm run test` — lightweight unit tests
+- `npm run test` — Vitest unit tests
 
 ## How stations are picked
 
-`src/lib/radioBrowser.ts` queries Radio Browser mirrors with deterministic
-fallback and merges the results. A strict station scoring pass:
+`src/lib/radioBrowser.ts` talks to Radio Browser mirrors with fallback, then scores candidates:
 
-1. Excludes obvious contamination (`jazz`, `classic rock`, `oldies`,
-   `schlager`, `talk`, `news`, `pop`, `country`, …)
-2. Scores positive classical signals (`classical`, `klassik`, `opera`,
-   `baroque`, `chamber`, composer names, orchestra language, …)
-3. Prefers verified, high-vote, HTTPS streams with stable metadata
+1. Drops obvious non-classical tags and names (e.g. classic rock, talk, schlager).
+2. Rewards classical signals (`classical`, `klassik`, `opera`, composer/orchestra cues, etc.).
+3. Prefers healthy checks, votes, and HTTPS where possible.
 
-If a station is uncertain, it is excluded.
+Uncertain rows are dropped.
 
-## Notes & caveats
+## Notes
 
-- Streams are served directly by each broadcaster. A few stations may
-  be temporarily offline or geo-blocked — the player will display
-  *Stream unavailable* if that happens; pick another dot.
-- HTTPS streams are shown by default. Legacy HTTP streams can be enabled
-  explicitly, but may be blocked by secure deployments.
-- Google Maps is loaded on demand. Without an API key, the map area shows a
-  simple gradient fallback while the rest of the app stays usable.
+- Streams come from each broadcaster; some may be offline or geo-blocked (the player surfaces a clear error).
+- Default stream list favors HTTPS; legacy HTTP can be toggled in-app but may fail on strict HTTPS sites.
+- Respect [Radio Browser](https://www.radio-browser.info/) and each station’s terms.
 
 ## License
 
-MIT. Radio Browser data is © its contributors under their own license;
-please respect each broadcaster's terms of use.
+MIT. Radio Browser data remains under its contributors’ terms; honor each broadcaster’s conditions.

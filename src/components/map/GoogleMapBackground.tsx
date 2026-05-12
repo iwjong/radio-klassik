@@ -362,7 +362,7 @@ function QuietMapFallback({ loadState }: { loadState: LoadState }) {
     loadState === "missing-key"
       ? "Add VITE_GOOGLE_MAPS_API_KEY to .env.local and restart the dev server."
       : loadState === "error"
-        ? "Google Maps did not load. Enable Maps JavaScript API, link billing, and allow http://localhost:5173/* as an HTTP referrer on the API key."
+        ? "Google Maps did not load. Enable Maps JavaScript API, link billing, and add this site’s origin to the API key HTTP referrer allowlist."
         : null;
 
   return (
