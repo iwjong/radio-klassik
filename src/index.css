@@ -59,6 +59,22 @@
     -webkit-backdrop-filter: blur(24px) saturate(108%);
     border: 1px solid rgba(255, 255, 255, 0.06);
   }
+  /**
+   * Bottom player only: no backdrop blur over the live map — avoids GPU shimmer /
+   * flicker while tiles and map opacity transition. Same border language as glass-strong.
+   */
+  .player-dock {
+    background: rgba(29, 32, 40, 0.82);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  /** Top chrome: opaque bar over the map so labels and controls stay readable. */
+  .top-bar-dock {
+    background: rgba(22, 25, 33, 0.88);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.04) inset,
+      0 12px 40px rgba(0, 0, 0, 0.35);
+  }
   .hairline {
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
   }
@@ -166,8 +182,7 @@
     opacity: 0.94;
   }
   .google-map-idle,
-  .google-map-playing,
-  .google-map-focus {
+  .google-map-playing {
     transition:
       opacity 1100ms cubic-bezier(0.22, 1, 0.36, 1),
       filter 1100ms cubic-bezier(0.22, 1, 0.36, 1);
@@ -179,10 +194,6 @@
   .google-map-playing {
     opacity: 1;
     filter: saturate(1.04) contrast(1.02);
-  }
-  .google-map-focus {
-    opacity: 0.96;
-    filter: saturate(1) contrast(1.02) brightness(0.98);
   }
   .google-map-canvas {
     position: absolute;
@@ -212,31 +223,137 @@
     line-height: 1.5;
     color: rgba(238, 240, 244, 0.72);
   }
-}
+  /* Map marker: default white + black text; selected red + white text */
+  .rk-map-marker {
+    position: absolute;
+    transform: translate(-50%, -100%);
+    cursor: pointer;
+    user-select: none;
+    --rk-marker-bg: #f0f0f0de;
+    --rk-marker-border: rgba(15, 23, 42, 0.28);
+    --rk-marker-tail: #f0f0f0de;
+  }
 
-.is-focus-mode .glass-strong {
-  background: rgba(25, 28, 36, 0.46);
-}
+  .rk-map-marker--active {
+    --rk-marker-bg: #cea337;
+    --rk-marker-border: #cea337;
+    --rk-marker-tail: #cea337;
+  }
 
-.is-focus-mode .vinyl {
-  opacity: 0.42;
-}
+  .rk-map-marker__inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
 
-.is-focus-mode .metadata-dissolve {
-  transform-origin: left center;
-}
+  .rk-map-marker__card {
+    box-sizing: border-box;
+    max-width: min(280px, 52vw);
+    padding: 6px 12px;
+    border-radius: 10px;
+    background: var(--rk-marker-bg);
+    border: 1px solid var(--rk-marker-border);
+  }
 
-.is-focus-mode .editorial-composer {
-  color: rgba(255, 250, 234, 0.98);
-}
+  .rk-map-marker__text {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    box-sizing: border-box;
+    max-width: min(268px, 50vw);
+    font-family: theme("fontFamily.sans");
+    letter-spacing: 0.01em;
+    color: #0f172a;
+  }
 
-.is-focus-mode .editorial-work {
-  color: rgba(255, 255, 255, 0.78);
-}
+  .rk-map-marker__line {
+    max-width: 100%;
+    line-height: 1.35;
+  }
 
-.is-focus-mode .editorial-listening-note,
-.is-focus-mode .editorial-footer {
-  color: rgba(255, 255, 255, 0.24);
+  /* Inactive / other stations: one line, ellipsis at card edge. */
+  .rk-map-marker__text:not(.rk-map-marker__text--wrap) .rk-map-marker__line {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Selected station: wrap with line clamp so long titles stay on the map. */
+  .rk-map-marker__text--wrap .rk-map-marker__line {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    white-space: normal;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+
+  .rk-map-marker__text--wrap:not(.rk-map-marker__text--twoline) .rk-map-marker__line--composer {
+    -webkit-line-clamp: 5;
+    line-clamp: 5;
+  }
+
+  .rk-map-marker__text--wrap.rk-map-marker__text--twoline .rk-map-marker__line--composer {
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+
+  .rk-map-marker__text--wrap.rk-map-marker__text--twoline .rk-map-marker__line--title {
+    -webkit-line-clamp: 5;
+    line-clamp: 5;
+  }
+
+  .rk-map-marker__line--hidden {
+    display: none !important;
+  }
+
+  .rk-map-marker__line--composer {
+    font-size: 11px;
+    font-weight: 400;
+  }
+
+  .rk-map-marker__line--title {
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  /* Single-line marker (station name or unparsed now-playing): one primary line. */
+  .rk-map-marker__text:not(.rk-map-marker__text--twoline) .rk-map-marker__line--composer {
+    font-weight: 400;
+    font-size: 11px;
+  }
+
+  .rk-map-marker--active .rk-map-marker__text:not(.rk-map-marker__text--twoline) .rk-map-marker__line--composer {
+    font-weight: 700;
+    font-size: 12px;
+    color: rgb(47, 34, 9);
+  }
+
+  /* Two-line now-playing: composer then work title (matches player stack). */
+  .rk-map-marker__text--twoline .rk-map-marker__line--composer {
+    font-weight: 600;
+    font-size: 11px;
+  }
+
+  .rk-map-marker--active .rk-map-marker__text--twoline .rk-map-marker__line--composer {
+    color: rgb(47, 34, 9);
+  }
+
+  .rk-map-marker--active .rk-map-marker__text--twoline .rk-map-marker__line--title {
+    font-weight: 700;
+    font-size: 12px;
+    color: rgb(47, 34, 9);
+  }
+
+  .rk-map-marker__tail {
+    width: 0;
+    height: 0;
+    margin-top: -1px;
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+    border-top: 11px solid var(--rk-marker-tail);
+  }
 }
 
 /* vinyl spinner shimmer */
@@ -290,8 +407,7 @@
     transform: none !important;
   }
   .google-map-idle,
-  .google-map-playing,
-  .google-map-focus {
+  .google-map-playing {
     transition: none !important;
   }
 }

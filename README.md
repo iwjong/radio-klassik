@@ -14,7 +14,7 @@ The map is built with the **[Maps JavaScript API](https://developers.google.com/
 
 **Credentials.** Set `VITE_GOOGLE_MAPS_API_KEY` in `.env.local` (see [Get API key](https://developers.google.com/maps/documentation/javascript/get-api-key)). In Google Cloud: enable **Maps JavaScript API**, attach a **billing account**, and (if you use HTTP referrer restrictions on the key) add referrer patterns for every origin where this app is served.
 
-**Map behaviour.** The map uses the default **roadmap** basemap with the standard control strip (zoom, map type, scale, fullscreen, Street View). Scroll wheel and keyboard shortcuts are enabled. Station locations use the classic **`google.maps.Marker`** default pin, with `optimized: false` so pins stay visible on the default raster-style map. The app does **not** pass a Cloud `mapId` into `Map` while using these legacy markers (a vector `mapId` can hide or break default pins; optional `VITE_GOOGLE_MAPS_MAP_ID` in config is reserved for a future **Advanced Marker** setup).
+**Map behaviour.** The map uses Google’s **`hybrid`** type: **satellite** imagery with built-in **roads and place-name labels** (no separate semi-transparent roadmap layer). **Default map UI** (zoom buttons, Street View pegman, fullscreen, scale, and related chrome) is **hidden** (`disableDefaultUI: true`); pan and **scroll-wheel zoom** still work. The Map / Satellite toggle stays hidden. **Built-in map keyboard shortcuts are disabled** so arrow keys stay free for the in-app player (previous/next station, volume). Station locations use a **custom `OverlayView`** marker: one **card + tail** aligned with app **dock** styling (same language as `top-bar-dock` / `player-dock`). The **selected** station shows **now-playing** text from `mapLiveLabel`; others show a short **name**. `optimized` raster pins are no longer used. The app does **not** pass a Cloud `mapId` into `Map` while using these legacy markers (a vector `mapId` can hide or break default pins; optional `VITE_GOOGLE_MAPS_MAP_ID` in config is reserved for a future **Advanced Marker** setup).
 
 **Zoom limits.** `googleMapsConfig` defines `minZoomFloor`, `maxZoom`, and `defaultZoom`. On resize, a **minimum zoom** is recomputed from the map container width so the world does not tile horizontally into repeated strips at very low zoom; see `minZoomToAvoidHorizontalWorldRepeat()` in `googleMapStyle.ts`.
 
@@ -22,7 +22,7 @@ The map is built with the **[Maps JavaScript API](https://developers.google.com/
 
 ## Features
 
-- **Google Map** — roadmap, pan/zoom, default red markers per station, click to select.
+- **Google Map** — hybrid (satellite + labels), unified dock-style station markers (card + pointer), live title on the selected station when metadata exists, no default control chrome, scroll zoom, click to select.
 - **Classical-only catalogue** — [Radio Browser](https://www.radio-browser.info/) with strict scoring and exclusions for non-classical noise.
 - **Player** — play/pause, previous/next, volume, Focus Mode, now-playing metadata handling.
 - **Curated stations** — verified labels, editorial copy, preferred coordinates where applicable.

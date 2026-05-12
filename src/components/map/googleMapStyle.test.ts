@@ -8,13 +8,13 @@ import {
 describe("google map style", () => {
   it("uses the quiet map atmosphere states", () => {
     expect(
-      getMapAtmosphereClass({ playbackStatus: "playing", focusMode: false }),
+      getMapAtmosphereClass({ playbackStatus: "playing" }),
     ).toBe("google-map-playing");
     expect(
-      getMapAtmosphereClass({ playbackStatus: "paused", focusMode: true }),
-    ).toBe("google-map-focus");
+      getMapAtmosphereClass({ playbackStatus: "paused" }),
+    ).toBe("google-map-idle");
     expect(
-      getMapAtmosphereClass({ playbackStatus: "idle", focusMode: false }),
+      getMapAtmosphereClass({ playbackStatus: "idle" }),
     ).toBe("google-map-idle");
   });
 

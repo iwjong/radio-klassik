@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { fetchNowPlayingMetadata, type NowPlayingMetadata } from "../lib/metadata";
+import {
+  fetchNowPlayingMetadata,
+  stationSupportsNowPlayingFetch,
+  type NowPlayingMetadata,
+} from "../lib/metadata";
 import type { Station } from "../lib/types";
 
 const METADATA_REFRESH_MS = 60_000;
@@ -12,7 +16,7 @@ export function useNowPlaying(station: Station | null): NowPlayingMetadata | nul
   const metadata = station ? metadataByStation[station.id] ?? null : null;
 
   useEffect(() => {
-    if (!station?.metadataUrl) return;
+    if (!station || !stationSupportsNowPlayingFetch(station)) return;
 
     const controller = new AbortController();
     let active = true;

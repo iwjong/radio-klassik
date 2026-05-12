@@ -4,6 +4,8 @@ import {
   fetchNowPlayingMetadata,
   getMetadataDisplayKey,
   getMetadataTransitionPhase,
+  getNowPlayingPrimaryMapLine,
+  isSrgSwissClassicStreamUrl,
   normalizeMetadataText,
   parseNowPlaying,
   resolveMetadataPacingTransition,
@@ -115,6 +117,68 @@ describe("metadata normalization", () => {
 
     vi.unstubAllGlobals();
   });
+
+  it("loads Radio Swiss Classic from SRG Deliver GraphQL when metadataUrl is absent", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        expect(String(input)).toContain("ssatr.playlist-api.deliver.media");
+        expect(init?.method).toBe("POST");
+        return new Response(
+          JSON.stringify({
+            data: {
+              channel: {
+                playingnow: {
+                  current: {
+                    metadata: {
+                      title: "Symphony No. 5",
+                      composer: "Beethoven",
+                      artist: "Vienna Philharmonic",
+                    },
+                  },
+                },
+              },
+            },
+          }),
+          { headers: { "content-type": "application/json" } },
+        );
+      }),
+    );
+
+    const station: Station = {
+      ...stationFixture(),
+      metadataUrl: undefined,
+      metadataFormat: undefined,
+      name: "Radio Swiss Classic",
+      url: "https://stream.srg-ssr.ch/srgssr/rsc_de/aac/96",
+    };
+
+    await expect(fetchNowPlayingMetadata(station)).resolves.toMatchObject({
+      composer: "Beethoven",
+      workTitle: "Symphony No. 5",
+      performer: "Vienna Philharmonic",
+    });
+
+    vi.unstubAllGlobals();
+  });
+});
+
+describe("isSrgSwissClassicStreamUrl", () => {
+  it("matches SRG Swiss Classic stream paths", () => {
+    expect(
+      isSrgSwissClassicStreamUrl("https://stream.srg-ssr.ch/srgssr/rsc_de/aac/96"),
+    ).toBe(true);
+    expect(
+      isSrgSwissClassicStreamUrl("https://stream.srg-ssr.ch/srgssr/rsc_it/mp3/128"),
+    ).toBe(true);
+  });
+
+  it("rejects other SRG streams and unrelated URLs", () => {
+    expect(
+      isSrgSwissClassicStreamUrl("https://stream.srg-ssr.ch/srgssr/rsj_de/aac/96"),
+    ).toBe(false);
+    expect(isSrgSwissClassicStreamUrl("https://example.com/rsc_de/x")).toBe(false);
+  });
 });
 
 describe("metadata display transitions", () => {
@@ -176,6 +240,41 @@ describe("metadata display transitions", () => {
     expect(entered.phase).toBe("entering");
     expect(entered.visible?.stationName).toBe("France Musique");
     expect(entered.pending).toBeNull();
+  });
+});
+
+describe("getNowPlayingPrimaryMapLine", () => {
+  it("falls back to station name when metadata is null", () => {
+    expect(getNowPlayingPrimaryMapLine(null, "Radio Swiss")).toBe("Radio Swiss");
+  });
+
+  it("prefers composer and work title together", () => {
+    expect(
+      getNowPlayingPrimaryMapLine(
+        {
+          composer: "Debussy",
+          workTitle: "La mer",
+          raw: "Debussy - La mer",
+          stationName: "Test",
+          updatedAt: 0,
+        },
+        "BBC",
+      ),
+    ).toBe("Debussy · La mer");
+  });
+
+  it("uses work title alone when composer is missing", () => {
+    expect(
+      getNowPlayingPrimaryMapLine(
+        {
+          workTitle: "Pictures at an Exhibition",
+          raw: "Pictures",
+          stationName: "Test",
+          updatedAt: 0,
+        },
+        "Station",
+      ),
+    ).toBe("Pictures at an Exhibition");
   });
 });
 

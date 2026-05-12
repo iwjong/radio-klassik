@@ -50,12 +50,9 @@ export function getGoogleMapsScriptUrl(apiKey: string): string {
 
 export function getMapAtmosphereClass({
   playbackStatus,
-  focusMode,
 }: {
   playbackStatus: string;
-  focusMode: boolean;
 }): string {
-  if (focusMode) return "google-map-focus";
   if (playbackStatus === "playing") return "google-map-playing";
   return "google-map-idle";
 }

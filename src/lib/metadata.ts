@@ -205,7 +205,62 @@ export function parseNowPlaying(
   };
 }
 
+const SRG_DELIVER_GRAPHQL = "https://ssatr.playlist-api.deliver.media/graphql";
+
+/** SRG Swiss Classic / Pop / Jazz streams share this playlist API; we only wire Classic (rsc_). */
+const SWISS_CLASSIC_GRAPHQL: Record<
+  string,
+  { channelId: string; titleSelection: string }
+> = {
+  de: {
+    channelId: "0191e9e4-ffc8-782b-8ace-6604e0d6f2dc",
+    titleSelection: "TitleDE",
+  },
+  en: {
+    channelId: "0191e9e4-ffc8-782b-8ace-6604e0d6f2dc",
+    titleSelection: "TitleEN",
+  },
+  fr: {
+    channelId: "0191e9e5-213d-705e-b520-cee967358e6f",
+    titleSelection: "TitleFR",
+  },
+  it: {
+    channelId: "0191e9e5-3db3-7deb-ae10-48c24845852b",
+    titleSelection: "TitleIT",
+  },
+};
+
+export function stationSupportsNowPlayingFetch(station: Pick<Station, "metadataUrl" | "url">): boolean {
+  return Boolean(station.metadataUrl) || isSrgSwissClassicStreamUrl(station.url);
+}
+
+export function isSrgSwissClassicStreamUrl(url: string): boolean {
+  try {
+    const u = new URL(url);
+    return (
+      u.hostname.includes("srg-ssr.ch") &&
+      /\/srgssr\/rsc_(de|en|fr|it)\//i.test(u.pathname)
+    );
+  } catch {
+    return false;
+  }
+}
+
 export async function fetchNowPlayingMetadata(
+  station: Station,
+  signal?: AbortSignal,
+): Promise<NowPlayingMetadata | null> {
+  if (station.metadataUrl) {
+    return fetchNowPlayingFromHttp(station, signal);
+  }
+
+  const srgClassic = await fetchSrgSwissClassicNowPlaying(station, signal);
+  if (srgClassic) return srgClassic;
+
+  return null;
+}
+
+async function fetchNowPlayingFromHttp(
   station: Station,
   signal?: AbortSignal,
 ): Promise<NowPlayingMetadata | null> {
@@ -221,6 +276,83 @@ export async function fetchNowPlayingMetadata(
   }
 
   return parseNowPlaying(await response.text(), station.name);
+}
+
+interface SrgDeliverPlayingResponse {
+  data?: {
+    channel?: {
+      playingnow?: {
+        current?: {
+          metadata?: {
+            title?: string;
+            composer?: string;
+            artist?: string;
+          };
+        };
+      };
+    };
+  };
+}
+
+async function fetchSrgSwissClassicNowPlaying(
+  station: Station,
+  signal?: AbortSignal,
+): Promise<NowPlayingMetadata | null> {
+  if (!isSrgSwissClassicStreamUrl(station.url)) return null;
+
+  const langMatch = station.url.match(/\/rsc_(de|en|fr|it)\//i);
+  const lang = langMatch ? langMatch[1].toLowerCase() : "de";
+  const cfg = SWISS_CLASSIC_GRAPHQL[lang] ?? SWISS_CLASSIC_GRAPHQL.de;
+
+  const query = `query ($chan: String) {
+    channel(id: $chan) {
+      playingnow {
+        current {
+          metadata {
+            title: ${cfg.titleSelection}
+            composer: ComposerMain
+            artist
+          }
+        }
+      }
+    }
+  }`;
+
+  const response = await fetch(SRG_DELIVER_GRAPHQL, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ query, variables: { chan: cfg.channelId } }),
+    signal,
+  });
+
+  if (!response.ok) return null;
+
+  const body = (await response.json()) as SrgDeliverPlayingResponse;
+  const meta = body.data?.channel?.playingnow?.current?.metadata;
+  if (!meta) return null;
+
+  const title = meta.title?.trim();
+  const composer = meta.composer?.trim();
+  const artist = meta.artist?.trim();
+  if (!title && !composer) return null;
+
+  const raw = [composer, title].filter(Boolean).join(" - ") || title || composer || "";
+  const parsed = parseNowPlaying(raw, station.name);
+  const performer =
+    artist && composer && artist !== composer ? artist : parsed?.performer;
+
+  return {
+    composer: composer || parsed?.composer,
+    workTitle: title || parsed?.workTitle,
+    movement: parsed?.movement,
+    orchestra: parsed?.orchestra,
+    conductor: parsed?.conductor,
+    soloist: parsed?.soloist,
+    performer,
+    raw: parsed?.raw ?? normalizeMetadataText(raw, station.name),
+    stationName: station.name,
+    updatedAt: Date.now(),
+  };
 }
 
 function parsePayload(
@@ -476,6 +608,27 @@ export function getMetadataDisplayKey(
   ]
     .filter(Boolean)
     .join("|");
+}
+
+/** One-line title for the active station’s map marker (work / movement first). */
+export function getNowPlayingPrimaryMapLine(
+  metadata: NowPlayingMetadata | null,
+  stationName: string,
+): string {
+  const fallback = stationName.trim() || "On air";
+  if (!metadata) return fallback;
+  if (metadata.workTitle) {
+    return metadata.composer
+      ? `${metadata.composer} · ${metadata.workTitle}`
+      : metadata.workTitle;
+  }
+  if (metadata.composer && metadata.movement) {
+    return `${metadata.composer} · ${metadata.movement}`;
+  }
+  if (metadata.composer) return metadata.composer;
+  const raw = metadata.raw?.trim();
+  if (raw && raw.length >= 3) return raw;
+  return fallback;
 }
 
 export function getMetadataTransitionPhase(

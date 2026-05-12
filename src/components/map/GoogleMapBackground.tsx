@@ -1,11 +1,22 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Station } from "../../lib/types";
+import { useStore } from "../../store/useStore";
+import type {
+  GoogleLatLngLiteral,
+  GoogleMapInstance,
+  GoogleMapOptions,
+  GoogleMapsApi,
+} from "./googleMapsTypes";
 import {
   getGoogleMapsScriptUrl,
   getMapAtmosphereClass,
   googleMapsConfig,
   minZoomToAvoidHorizontalWorldRepeat,
 } from "./googleMapStyle";
+import {
+  createStationMapMarker,
+  type StationMapMarkerHandle,
+} from "./stationMapMarker";
 
 interface GoogleMapBackgroundProps {
   stations: Station[];
@@ -13,67 +24,6 @@ interface GoogleMapBackgroundProps {
   playbackStatus: string;
   focusMode: boolean;
   onSelectStation: (stationId: string) => void;
-}
-
-interface GoogleLatLngLiteral {
-  lat: number;
-  lng: number;
-}
-
-interface GoogleMapOptions {
-  center: GoogleLatLngLiteral;
-  clickableIcons?: boolean;
-  disableDefaultUI?: boolean;
-  fullscreenControl?: boolean;
-  gestureHandling?: "cooperative" | "greedy" | "none" | "auto";
-  isFractionalZoomEnabled?: boolean;
-  keyboardShortcuts?: boolean;
-  mapTypeControl?: boolean;
-  mapTypeId?: string;
-  maxZoom?: number;
-  minZoom?: number;
-  scaleControl?: boolean;
-  scrollwheel?: boolean;
-  streetViewControl?: boolean;
-  zoom?: number;
-  zoomControl?: boolean;
-}
-
-interface GoogleMarkerOptions {
-  clickable?: boolean;
-  map: GoogleMapInstance;
-  /** `true` can hide default pins on WebGL / vector basemaps — keep off for classic red markers. */
-  optimized?: boolean;
-  position: GoogleLatLngLiteral;
-  title: string;
-  zIndex?: number;
-}
-
-interface GoogleMapInstance {
-  getZoom: () => number | undefined;
-  panTo: (latLng: GoogleLatLngLiteral) => void;
-  setOptions: (options: Partial<GoogleMapOptions>) => void;
-  setZoom: (zoom: number) => void;
-}
-
-interface GoogleMarkerInstance {
-  addListener: (eventName: string, handler: () => void) => void;
-  setMap: (map: GoogleMapInstance | null) => void;
-  setPosition: (position: GoogleLatLngLiteral) => void;
-  setTitle: (title: string) => void;
-  setZIndex: (zIndex: number) => void;
-}
-
-interface GoogleMapsApi {
-  maps: {
-    event: {
-      clearInstanceListeners: (instance: object) => void;
-    };
-    Map: new (element: HTMLElement, options: GoogleMapOptions) => GoogleMapInstance;
-    Marker: (new (options: GoogleMarkerOptions) => GoogleMarkerInstance) & {
-      MAX_ZINDEX: number;
-    };
-  };
 }
 
 declare global {
@@ -86,6 +36,10 @@ declare global {
 
 const GOOGLE_MAPS_SCRIPT_ID = "radio-klassik-google-maps-script";
 
+const Z_MARKER_ACTIVE = 2_000_000;
+const Z_MARKER_HOVER = 500_000;
+const Z_MARKER_BASE = 10;
+
 type LoadState = "loading" | "ready" | "missing-key" | "error";
 
 export function GoogleMapBackground({
@@ -97,11 +51,15 @@ export function GoogleMapBackground({
 }: GoogleMapBackgroundProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<GoogleMapInstance | null>(null);
-  const markersRef = useRef<Map<string, GoogleMarkerInstance>>(new Map());
+  const markersRef = useRef<Map<string, StationMapMarkerHandle>>(new Map());
   const [loadState, setLoadState] = useState<LoadState>(() =>
     googleMapsConfig.apiKey ? "loading" : "missing-key",
   );
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const mapLiveStationId = useStore((s) => s.mapLiveLabel.stationId);
+  const mapLiveLine = useStore((s) => s.mapLiveLabel.line);
+  const mapLiveComposer = useStore((s) => s.mapLiveLabel.composerLine);
+  const mapLiveTitle = useStore((s) => s.mapLiveLabel.titleLine);
 
   const markerStations = useMemo(
     () => stations.filter(hasUsableCoordinates),
@@ -109,7 +67,6 @@ export function GoogleMapBackground({
   );
   const atmosphereClass = getMapAtmosphereClass({
     playbackStatus,
-    focusMode,
   });
 
   useEffect(() => {
@@ -166,12 +123,13 @@ export function GoogleMapBackground({
 
     return () => {
       resizeObserver?.disconnect();
-      const markers = markersRef.current; // eslint-disable-line react-hooks/exhaustive-deps -- read latest markers at map teardown
-      for (const marker of markers.values()) {
-        google.maps.event.clearInstanceListeners(marker);
-        marker.setMap(null);
+      /* eslint-disable react-hooks/exhaustive-deps -- read latest marker handles at map teardown */
+      const markersSnapshot = markersRef.current;
+      /* eslint-enable react-hooks/exhaustive-deps */
+      for (const handle of markersSnapshot.values()) {
+        handle.destroy();
       }
-      markers.clear();
+      markersSnapshot.clear();
       if (mapRef.current) {
         google.maps.event.clearInstanceListeners(mapRef.current);
       }
@@ -187,44 +145,87 @@ export function GoogleMapBackground({
 
     const activeIds = new Set(markerStations.map((station) => station.id));
 
-    for (const [stationId, marker] of markersRef.current) {
+    for (const [stationId, handle] of markersRef.current) {
       if (!activeIds.has(stationId)) {
-        google.maps.event.clearInstanceListeners(marker);
-        marker.setMap(null);
+        handle.destroy();
         markersRef.current.delete(stationId);
       }
     }
 
     for (const station of markerStations) {
-      const position = { lat: station.lat, lng: station.lng };
-      const marker = markersRef.current.get(station.id);
+      const position: GoogleLatLngLiteral = { lat: station.lat, lng: station.lng };
+      const handle = markersRef.current.get(station.id);
       const isActive = station.id === currentId;
       const isHovered = station.id === hoveredId;
+      const richComposer = mapLiveComposer?.trim();
+      const richTitle = mapLiveTitle?.trim();
+      const useRichLive =
+        isActive &&
+        mapLiveStationId === station.id &&
+        Boolean(richComposer && richTitle);
+      const useSingleLive =
+        isActive &&
+        mapLiveStationId === station.id &&
+        mapLiveLine.trim().length > 0 &&
+        !useRichLive;
+      const useLiveLine = useRichLive || useSingleLive;
+      const wrapText = isActive;
+      const displayText = useLiveLine
+        ? useRichLive
+          ? richComposer!.trim()
+          : mapLiveLine.trim()
+        : truncateMarkerDisplay(station.name, MARKER_TEXT_MAX_DEFAULT);
+      const secondLine =
+        useRichLive && richTitle ? richTitle.trim() : null;
+      const zIndex = isActive
+        ? Z_MARKER_ACTIVE
+        : isHovered
+          ? Z_MARKER_HOVER
+          : Z_MARKER_BASE;
 
-      if (marker) {
-        marker.setPosition(position);
-        marker.setTitle(station.name);
-        marker.setZIndex(
-          isActive ? google.maps.Marker.MAX_ZINDEX + 1 : isHovered ? 100 : 1,
-        );
+      if (handle) {
+        handle.setPosition(position);
+        handle.setVisual({
+          displayText,
+          secondLine,
+          wrapText,
+          active: isActive,
+          zIndex,
+          stationName: station.name,
+        });
         continue;
       }
 
-      const nextMarker = new google.maps.Marker({
-        clickable: true,
+      const next = createStationMapMarker(
+        google,
         map,
-        optimized: false,
         position,
-        title: station.name,
-        zIndex: isActive ? google.maps.Marker.MAX_ZINDEX + 1 : 1,
-      });
-
-      nextMarker.addListener("click", () => onSelectStation(station.id));
-      nextMarker.addListener("mouseover", () => setHoveredId(station.id));
-      nextMarker.addListener("mouseout", () => setHoveredId(null));
-      markersRef.current.set(station.id, nextMarker);
+        {
+          displayText,
+          secondLine,
+          wrapText,
+          active: isActive,
+          zIndex,
+          stationName: station.name,
+        },
+        {
+          onClick: () => onSelectStation(station.id),
+          onMouseEnter: () => setHoveredId(station.id),
+          onMouseLeave: () => setHoveredId(null),
+        },
+      );
+      markersRef.current.set(station.id, next);
     }
-  }, [currentId, hoveredId, markerStations, onSelectStation]);
+  }, [
+    currentId,
+    hoveredId,
+    mapLiveComposer,
+    mapLiveLine,
+    mapLiveStationId,
+    mapLiveTitle,
+    markerStations,
+    onSelectStation,
+  ]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -236,7 +237,7 @@ export function GoogleMapBackground({
     if (!currentStation) return;
 
     map.panTo({ lat: currentStation.lat, lng: currentStation.lng });
-    const targetZoom = focusMode ? 12 : 10;
+    const targetZoom = focusMode ? 11 : 10;
     if ((map.getZoom() ?? googleMapsConfig.defaultZoom) < targetZoom) {
       map.setZoom(targetZoom);
     }
@@ -331,20 +332,19 @@ function getGoogleMapOptions(): GoogleMapOptions {
   return {
     center: googleMapsConfig.defaultCenter,
     clickableIcons: true,
-    disableDefaultUI: false,
-    fullscreenControl: true,
+    /** Hides Google’s default control stack (zoom, Street View, fullscreen, scale, etc.). */
+    disableDefaultUI: true,
     gestureHandling: "auto",
     isFractionalZoomEnabled: true,
-    keyboardShortcuts: true,
-    mapTypeControl: true,
-    mapTypeId: "roadmap",
+    /** Off so ← / → control stations (Player) instead of panning the map. */
+    keyboardShortcuts: false,
+    mapTypeControl: false,
+    /** Satellite imagery with Google’s roads and place-name labels (no custom tile overlay). */
+    mapTypeId: "hybrid",
     maxZoom: googleMapsConfig.maxZoom,
     minZoom: googleMapsConfig.minZoomFloor,
-    scaleControl: true,
     scrollwheel: true,
-    streetViewControl: true,
     zoom: googleMapsConfig.defaultZoom,
-    zoomControl: true,
   };
 }
 
@@ -355,6 +355,15 @@ function hasUsableCoordinates(station: Station): boolean {
     Math.abs(station.lat) <= 90 &&
     Math.abs(station.lng) <= 180
   );
+}
+
+const MARKER_TEXT_MAX_DEFAULT = 22;
+
+function truncateMarkerDisplay(text: string, maxChars: number): string {
+  const t = text.trim();
+  const chars = [...t];
+  if (chars.length <= maxChars) return t;
+  return `${chars.slice(0, maxChars - 1).join("")}…`;
 }
 
 function QuietMapFallback({ loadState }: { loadState: LoadState }) {

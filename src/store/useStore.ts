@@ -17,6 +17,16 @@ interface PersistedState {
   focusMode: boolean;
 }
 
+/** Live label for the selected station’s map marker (now-playing); not persisted. */
+export interface MapLiveLabelState {
+  stationId: string | null;
+  /** Single-line summary (tooltip / fallback); not persisted. */
+  line: string;
+  /** When both are set with `line`, the active marker shows composer then work in two lines. */
+  composerLine?: string | null;
+  titleLine?: string | null;
+}
+
 interface State extends PersistedState {
   stations: Station[];
   loading: boolean;
@@ -28,6 +38,7 @@ interface State extends PersistedState {
   showInfo: boolean;
   showLegacyStreams: boolean;
   focusMode: boolean;
+  mapLiveLabel: MapLiveLabelState;
 
   setStations: (stations: Station[]) => void;
   setLoadError: (msg: string | null) => void;
@@ -35,6 +46,7 @@ interface State extends PersistedState {
   setSearchQuery: (q: string) => void;
   selectStation: (id: string | null) => void;
   setPlaybackStatus: (s: PlaybackStatus) => void;
+  setMapLiveLabel: (v: MapLiveLabelState) => void;
   setVolume: (v: number) => void;
   setShowLegacyStreams: (v: boolean) => void;
   setFocusMode: (v: boolean) => void;
@@ -63,6 +75,7 @@ export const useStore = create<State>()(
       volume: 0.8,
       showLegacyStreams: false,
       focusMode: false,
+      mapLiveLabel: { stationId: null, line: "" },
 
       setStations: (stations) => set({ stations }),
       setLoadError: (msg) => set({ loadError: msg }),
@@ -70,6 +83,7 @@ export const useStore = create<State>()(
       setSearchQuery: (q) => set({ searchQuery: q }),
       selectStation: (id) => set({ currentStationId: id }),
       setPlaybackStatus: (s) => set({ playbackStatus: s }),
+      setMapLiveLabel: (v) => set({ mapLiveLabel: v }),
       setVolume: (v) => set({ volume: Math.max(0, Math.min(1, v)) }),
       setShowLegacyStreams: (v) => set({ showLegacyStreams: v }),
       setFocusMode: (v) => set({ focusMode: v }),

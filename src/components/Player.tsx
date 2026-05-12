@@ -7,6 +7,7 @@ import {
   METADATA_PACING_HOLD_MS,
   createMetadataPacingState,
   getMetadataDisplayKey,
+  getNowPlayingPrimaryMapLine,
   resolveMetadataPacingTransition,
   type NowPlayingMetadata,
   type MetadataPacingPhase,
@@ -27,6 +28,7 @@ export function Player() {
   const stations = useStore((s) => s.stations);
   const focusMode = useStore((s) => s.focusMode);
   const toggleFocusMode = useStore((s) => s.toggleFocusMode);
+  const setMapLiveLabel = useStore((s) => s.setMapLiveLabel);
   const nowPlaying = useNowPlaying(station);
   const pacedNowPlaying = usePacedMetadata(nowPlaying);
   const nowPlayingKey = useMemo(
@@ -35,6 +37,8 @@ export function Player() {
   );
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  /** After first `playing`, ignore `waiting` for status — streams stutter and would flip loading/playing constantly. */
+  const playbackEstablishedRef = useRef(false);
   const country = station ? station.country || countryName(station.countryCode) || "" : "";
   const presentation = useMemo(
     () => getListeningPresentation(station, status, country),
@@ -58,17 +62,46 @@ export function Player() {
   const nextStation = useCallback(
     (dir: 1 | -1) => {
       if (!stations.length) return;
-      if (!station) {
+      const currentId = station?.id ?? null;
+      if (!currentId) {
         selectStation(stations[0].id);
         return;
       }
-      const idx = stations.findIndex((s) => s.id === station.id);
+      const idx = stations.findIndex((s) => s.id === currentId);
       if (idx < 0) return;
       const nextIdx = (idx + dir + stations.length) % stations.length;
       selectStation(stations[nextIdx].id);
     },
-    [selectStation, station, stations],
+    [selectStation, station?.id, stations],
   );
+
+  const stationId = station?.id ?? null;
+  const streamUrl = station?.url ?? "";
+
+  useEffect(() => {
+    if (!stationId) {
+      setMapLiveLabel({ stationId: null, line: "", composerLine: null, titleLine: null });
+      return;
+    }
+    const name = station?.name?.trim() ? station.name : "Station";
+    const meta = pacedNowPlaying.metadata;
+    const line = getNowPlayingPrimaryMapLine(meta, name);
+    if (meta?.workTitle?.trim()) {
+      setMapLiveLabel({
+        stationId,
+        line,
+        composerLine: meta.composer?.trim() || name,
+        titleLine: meta.workTitle.trim(),
+      });
+    } else {
+      setMapLiveLabel({
+        stationId,
+        line,
+        composerLine: null,
+        titleLine: null,
+      });
+    }
+  }, [stationId, station?.name, pacedNowPlaying.metadata, setMapLiveLabel]);
 
   // Mount audio element once
   useEffect(() => {
@@ -82,32 +115,44 @@ export function Player() {
     };
   }, []);
 
-  // Handle station changes
+  // Bind stream by stable id + url only — `station` object identity churns whenever
+  // `stations[]` is replaced (same station, new object) and must not restart playback.
   useEffect(() => {
     const a = audioRef.current;
     if (!a) return;
-    if (!station) {
+    let pauseDebounceId: number | undefined;
+
+    if (!stationId || !streamUrl) {
       a.pause();
       a.removeAttribute("src");
       setStatus("idle");
       return;
     }
     setStatus("loading");
+    playbackEstablishedRef.current = false;
     a.pause();
-    if (isMixedContentBlocked(station.url)) {
+    if (isMixedContentBlocked(streamUrl)) {
       a.removeAttribute("src");
       setStatus("error");
       return;
     }
-    a.src = station.url;
+    a.src = streamUrl;
     a.load();
-    const onPlaying = () => setStatus("playing");
-    const onPause = () => {
-      // Distinguish between manual pause and a transient stall.
-      if (a.ended || a.readyState < 2) return;
-      setStatus("paused");
+    const onPlaying = () => {
+      window.clearTimeout(pauseDebounceId);
+      playbackEstablishedRef.current = true;
+      setStatus("playing");
     };
-    const onWaiting = () => setStatus("loading");
+    const onPause = () => {
+      if (a.ended || a.readyState < 2) return;
+      window.clearTimeout(pauseDebounceId);
+      pauseDebounceId = window.setTimeout(() => {
+        if (a.paused && !a.ended) setStatus("paused");
+      }, 160);
+    };
+    const onWaiting = () => {
+      if (!playbackEstablishedRef.current) setStatus("loading");
+    };
     const onError = () => setStatus("error");
     a.addEventListener("playing", onPlaying);
     a.addEventListener("pause", onPause);
@@ -115,17 +160,18 @@ export function Player() {
     a.addEventListener("error", onError);
     a.play()
       .then(() => {
-        pushRecent(station.id);
-        void reportClick(station.id);
+        pushRecent(stationId);
+        void reportClick(stationId);
       })
       .catch(() => setStatus("error"));
     return () => {
+      window.clearTimeout(pauseDebounceId);
       a.removeEventListener("playing", onPlaying);
       a.removeEventListener("pause", onPause);
       a.removeEventListener("waiting", onWaiting);
       a.removeEventListener("error", onError);
     };
-  }, [station, pushRecent, setStatus]);
+  }, [stationId, streamUrl, pushRecent, setStatus]);
 
   // Volume sync
   useEffect(() => {
@@ -174,7 +220,7 @@ export function Player() {
 
   if (!station) {
     return (
-      <div className="pointer-events-auto glass-strong rounded-lg px-5 py-4 flex items-center gap-4 w-[min(680px,92vw)] shadow-soft">
+      <div className="pointer-events-auto player-dock rounded-lg px-5 py-4 flex items-center gap-4 w-[min(680px,92vw)] shadow-soft">
         <div className="vinyl w-12 h-12 rounded-full" />
         <div className="flex-1">
           <div className="text-[10px] tracking-[0.3em] uppercase text-white/40">
@@ -200,17 +246,9 @@ export function Player() {
   return (
     <div
       className={
-        "pointer-events-auto glass-strong rounded-lg px-4 sm:px-5 py-3.5 flex items-center gap-4 w-[min(820px,94vw)] shadow-soft transition-all duration-700 " +
-        (focusMode ? "bg-ink-900/50" : "")
+        "pointer-events-auto isolate player-dock rounded-lg px-4 sm:px-5 py-3.5 flex items-center gap-4 w-[min(820px,94vw)] shadow-soft transition-colors duration-700"
       }
     >
-      <div
-        className={
-          "vinyl w-14 h-14 rounded-full shrink-0 " +
-          (status === "playing" ? "animate-spin-slow" : "")
-        }
-      />
-
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="text-[10px] tracking-[0.3em] uppercase text-gold-400/80">
@@ -243,12 +281,7 @@ export function Player() {
         )}
       </div>
 
-      <div
-        className={
-          "flex items-center gap-1 transition-opacity duration-700 " +
-          (focusMode ? "opacity-45 hover:opacity-100 focus-within:opacity-100" : "")
-        }
-      >
+      <div className="flex items-center gap-1">
         <IconButton title="Previous (←)" onClick={() => nextStation(-1)}>
           <SkipBack />
         </IconButton>

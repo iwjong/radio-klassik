@@ -13,41 +13,41 @@ export function TopBar({ onOpenSearch, onOpenLibrary, onOpenAbout }: Props) {
   const setShowLegacyStreams = useStore((s) => s.setShowLegacyStreams);
 
   return (
-    <div className="pointer-events-auto flex items-center justify-between gap-4 px-5 sm:px-7 py-4">
-      <div className="flex items-center gap-3 select-none">
-        <Logo />
-        <div className="leading-tight">
-          <div className="font-display text-2xl gradient-text tracking-wide">
-            Radio Klassik
-          </div>
-          <div className="text-[10px] tracking-[0.3em] text-white/40 uppercase">
-            Spatial classical listening
+    <div className="pointer-events-auto flex justify-center px-3 sm:px-6 pt-3 sm:pt-4">
+      <div className="top-bar-dock flex w-full max-w-[min(1120px,calc(100vw-1.5rem))] items-center justify-between gap-3 rounded-xl px-4 py-3 sm:gap-4 sm:px-5 sm:py-3.5">
+        <div className="flex min-w-0 flex-1 items-center gap-3 select-none">
+          <div className="min-w-0 leading-tight">
+            <div className="font-display text-2xl tracking-wide gradient-text drop-shadow-[0_1px_12px_rgba(0,0,0,0.45)]">
+              Radio Klassik
+            </div>
+            <div className="text-[10px] uppercase tracking-[0.28em] text-white/62">
+              Spatial classical listening
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="flex items-center gap-1">
+        <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
         <button
           onClick={onOpenSearch}
-          className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg glass text-white/[0.66] hover:text-white hover:bg-white/[0.045] transition text-sm"
+          className="hidden sm:flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.06] px-3 py-2 text-sm text-white/88 transition hover:border-white/15 hover:bg-white/[0.1] hover:text-white"
           title="Search (S or /)"
         >
           <SearchIcon />
           <span>Search stations</span>
-          <kbd className="text-[10px] text-white/40 px-1.5 py-0.5 rounded border border-white/10">
+          <kbd className="rounded border border-white/18 bg-black/25 px-1.5 py-0.5 text-[10px] text-white/75">
             /
           </kbd>
         </button>
         <button
           onClick={onOpenSearch}
-          className="sm:hidden btn-ghost"
+          className="sm:hidden rounded-lg p-2 text-white/85 transition hover:bg-white/[0.08] hover:text-white"
           title="Search"
         >
           <SearchIcon />
         </button>
         <button
           onClick={onOpenLibrary}
-          className="btn-ghost flex items-center gap-2"
+          className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-white/82 transition hover:bg-white/[0.08] hover:text-white"
           title="Library (L)"
         >
           <LibraryIcon />
@@ -55,21 +55,23 @@ export function TopBar({ onOpenSearch, onOpenLibrary, onOpenAbout }: Props) {
         </button>
         <button
           onClick={onOpenAbout}
-          className="btn-ghost"
+          className="rounded-lg p-2 text-white/82 transition hover:bg-white/[0.08] hover:text-white"
           title="About"
         >
           <InfoIcon />
         </button>
-        <div className="hidden md:flex items-center gap-2 ml-2 pl-3 border-l border-white/10 text-[11px] text-white/40">
+        <div className="ml-1 hidden items-center gap-2 border-l border-white/18 pl-3 text-[11px] text-white/72 md:flex">
           {loading ? (
             <>
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse-soft" />
-              <span>Loading stations…</span>
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400 animate-pulse-soft" />
+              <span className="whitespace-nowrap">Loading stations…</span>
             </>
           ) : (
             <>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-              <span>{total > 0 ? `${total} stations live` : "No curated stations"}</span>
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.45)]" />
+              <span className="whitespace-nowrap">
+                {total > 0 ? `${total} stations live` : "No curated stations"}
+              </span>
             </>
           )}
         </div>
@@ -78,7 +80,7 @@ export function TopBar({ onOpenSearch, onOpenLibrary, onOpenAbout }: Props) {
           role="switch"
           aria-checked={showLegacyStreams}
           onClick={() => setShowLegacyStreams(!showLegacyStreams)}
-          className="hidden lg:flex items-center gap-2 ml-2 text-[11px] text-white/45 hover:text-white/70 transition"
+          className="ml-1 hidden items-center gap-2 text-[11px] text-white/72 transition hover:text-white/95 lg:flex"
           title="Show legacy HTTP streams"
         >
           <span>Legacy</span>
@@ -96,53 +98,16 @@ export function TopBar({ onOpenSearch, onOpenLibrary, onOpenAbout }: Props) {
                 (showLegacyStreams
                   ? "left-3.5 bg-gold-300"
                   : "left-0.5 bg-white/45")
-              }
-            />
-          </span>
+            }
+          />
+        </span>
         </button>
+        </div>
       </div>
     </div>
   );
 }
 
-function Logo() {
-  return (
-    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-      <circle
-        cx="20"
-        cy="20"
-        r="18"
-        stroke="url(#g1)"
-        strokeWidth="1.4"
-      />
-      <ellipse
-        cx="20"
-        cy="20"
-        rx="9"
-        ry="18"
-        stroke="url(#g1)"
-        strokeWidth="0.8"
-        opacity="0.6"
-      />
-      <ellipse
-        cx="20"
-        cy="20"
-        rx="18"
-        ry="6"
-        stroke="url(#g1)"
-        strokeWidth="0.8"
-        opacity="0.6"
-      />
-      <circle cx="20" cy="20" r="2.6" fill="#e9c46a" />
-      <defs>
-        <linearGradient id="g1" x1="0" y1="0" x2="40" y2="40">
-          <stop offset="0%" stopColor="#fff5d6" />
-          <stop offset="100%" stopColor="#b8862a" />
-        </linearGradient>
-      </defs>
-    </svg>
-  );
-}
 function SearchIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
