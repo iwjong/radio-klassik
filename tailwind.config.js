@@ -23,14 +23,10 @@ export default {
         },
       },
       fontFamily: {
-        display: ["'Cormorant Garamond'", "Georgia", "serif"],
-        sans: [
-          "Inter",
-          "-apple-system",
-          "BlinkMacSystemFont",
-          "Segoe UI",
-          "sans-serif",
-        ],
+        display: ["'Manrope'", "system-ui", "sans-serif"],
+        sans: ["'Manrope'", "system-ui", "sans-serif"],
+        /** Top bar + quote generator blockquotes only */
+        serif: ["'EB Garamond'", "Georgia", "serif"],
         mono: ["'JetBrains Mono'", "Menlo", "monospace"],
       },
       boxShadow: {

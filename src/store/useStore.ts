@@ -10,7 +10,6 @@ export type PlaybackStatus =
   | "error";
 
 interface PersistedState {
-  favorites: string[];
   recent: string[];
   volume: number;
   showLegacyStreams: boolean;
@@ -51,7 +50,6 @@ interface State extends PersistedState {
   setShowLegacyStreams: (v: boolean) => void;
   setFocusMode: (v: boolean) => void;
   toggleFocusMode: () => void;
-  toggleFavorite: (id: string) => void;
   pushRecent: (id: string) => void;
   toggleLibrary: () => void;
   setShowLibrary: (v: boolean) => void;
@@ -70,7 +68,6 @@ export const useStore = create<State>()(
       showLibrary: false,
       showInfo: false,
 
-      favorites: [],
       recent: [],
       volume: 0.8,
       showLegacyStreams: false,
@@ -88,14 +85,6 @@ export const useStore = create<State>()(
       setShowLegacyStreams: (v) => set({ showLegacyStreams: v }),
       setFocusMode: (v) => set({ focusMode: v }),
       toggleFocusMode: () => set({ focusMode: !get().focusMode }),
-      toggleFavorite: (id) => {
-        const cur = get().favorites;
-        set({
-          favorites: cur.includes(id)
-            ? cur.filter((x) => x !== id)
-            : [id, ...cur].slice(0, 200),
-        });
-      },
       pushRecent: (id) => {
         const cur = get().recent.filter((x) => x !== id);
         set({ recent: [id, ...cur].slice(0, 30) });
@@ -107,7 +96,6 @@ export const useStore = create<State>()(
     {
       name: "radio-klassik-v1",
       partialize: (s): PersistedState => ({
-        favorites: s.favorites,
         recent: s.recent,
         volume: s.volume,
         showLegacyStreams: s.showLegacyStreams,

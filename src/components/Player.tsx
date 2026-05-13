@@ -19,10 +19,8 @@ export function Player() {
   const station = useCurrentStation();
   const status = useStore((s) => s.playbackStatus);
   const volume = useStore((s) => s.volume);
-  const favorites = useStore((s) => s.favorites);
   const setStatus = useStore((s) => s.setPlaybackStatus);
   const setVolume = useStore((s) => s.setVolume);
-  const toggleFavorite = useStore((s) => s.toggleFavorite);
   const pushRecent = useStore((s) => s.pushRecent);
   const selectStation = useStore((s) => s.selectStation);
   const stations = useStore((s) => s.stations);
@@ -200,8 +198,6 @@ export function Player() {
       } else if (e.code === "ArrowDown") {
         e.preventDefault();
         setVolume(Math.max(0, volume - 0.05));
-      } else if (e.key === "f" || e.key === "F") {
-        if (station) toggleFavorite(station.id);
       } else if (e.key === "m" || e.key === "M") {
         if (station) toggleFocusMode();
       }
@@ -212,7 +208,6 @@ export function Player() {
     nextStation,
     setVolume,
     station,
-    toggleFavorite,
     toggleFocusMode,
     togglePlay,
     volume,
@@ -220,13 +215,12 @@ export function Player() {
 
   if (!station) {
     return (
-      <div className="pointer-events-auto player-dock rounded-lg px-5 py-4 flex items-center gap-4 w-[min(680px,92vw)] shadow-soft">
-        <div className="vinyl w-12 h-12 rounded-full" />
+      <div className="pointer-events-auto player-dock px-5 py-4 flex items-center gap-4 w-[min(680px,92vw)] shadow-soft">
         <div className="flex-1">
-          <div className="text-[10px] tracking-[0.3em] uppercase text-white/40">
+          <div className="text-xs tracking-[0.28em] uppercase text-white/45">
             {presentation.stateLabel}
           </div>
-          <div className="font-display text-xl text-white/80">
+          <div className="text-base font-semibold tracking-tight text-white/80">
             {presentation.title}
           </div>
           <div className="editorial-detail mt-0.5 truncate">
@@ -240,22 +234,18 @@ export function Player() {
     );
   }
 
-  const isFav = favorites.includes(station.id);
   const legacyBlocked = isMixedContentBlocked(station.url);
 
   return (
     <div
       className={
-        "pointer-events-auto isolate player-dock rounded-lg px-4 sm:px-5 py-3.5 flex items-center gap-4 w-[min(820px,94vw)] shadow-soft transition-colors duration-700"
+        "pointer-events-auto isolate player-dock px-4 sm:px-5 py-3.5 flex items-center gap-4 w-[min(820px,94vw)] shadow-soft transition-colors duration-700"
       }
     >
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] tracking-[0.3em] uppercase text-gold-400/80">
-            On Air
-          </span>
           <StatusDot status={status} />
-          <span className="text-[10px] text-white/40">
+          <span className="text-xs text-white/45">
             {presentation.stateLabel}
           </span>
         </div>
@@ -311,12 +301,6 @@ export function Player() {
         </div>
 
         <IconButton
-          title={isFav ? "Remove from favorites" : "Add to favorites (F)"}
-          onClick={() => toggleFavorite(station.id)}
-        >
-          <Heart filled={isFav} />
-        </IconButton>
-        <IconButton
           title={focusMode ? "Leave focus mode (M)" : "Focus mode (M)"}
           onClick={toggleFocusMode}
           pressed={focusMode}
@@ -337,7 +321,7 @@ function StatusDot({ status }: { status: string }) {
         : status === "error"
           ? "bg-red-500"
           : "bg-white/30";
-  return <span className={`inline-block w-1.5 h-1.5 rounded-full ${cls}`} />;
+  return <span className={`inline-block w-2 h-2 rounded-full ${cls}`} />;
 }
 
 function NowPlaying({
@@ -358,7 +342,7 @@ function NowPlaying({
     .join(" · ");
 
   return (
-    <div className={`metadata-dissolve metadata-${phase} min-h-[86px] py-1`}>
+    <div className={`metadata-dissolve metadata-${phase} min-h-[4.25rem] py-1`}>
       <div className="metadata-line editorial-composer truncate">
         {metadata.composer || stationName}
       </div>
@@ -472,20 +456,6 @@ function SkipForward() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
       <path d="M16 6h2v12h-2zM4 6l11 6L4 18z" />
-    </svg>
-  );
-}
-function Heart({ filled }: { filled: boolean }) {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill={filled ? "#e9c46a" : "none"}
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
     </svg>
   );
 }

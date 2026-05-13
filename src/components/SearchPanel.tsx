@@ -58,14 +58,14 @@ export function SearchPanel({ onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-40 bg-ink-950/35 backdrop-blur-[3px] animate-fade-in"
+      className="fixed inset-0 z-40 animate-fade-in"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-label="Search classical stations"
     >
       <div
-        className="absolute top-24 left-1/2 -translate-x-1/2 w-[min(660px,92vw)] glass-strong rounded-lg overflow-hidden shadow-soft"
+        className="absolute top-24 left-1/2 -translate-x-1/2 w-[min(660px,92vw)] panel-modal overflow-hidden shadow-soft"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3 px-5 py-4 border-b border-white/[0.045]">

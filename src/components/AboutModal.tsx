@@ -19,59 +19,63 @@ export function AboutModal({ onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-40 bg-ink-950/40 backdrop-blur-[3px] grid place-items-center animate-fade-in"
+      className="fixed inset-0 z-40 grid place-items-center animate-fade-in p-4"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-label="About Radio Klassik"
     >
       <div
-        className="glass-strong rounded-lg p-8 w-[min(520px,92vw)] shadow-soft"
+        className="panel-modal p-8 w-[min(520px,92vw)] shadow-soft"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="text-[10px] tracking-[0.3em] text-gold-400/80 uppercase">
           About
         </div>
-        <h2 className="font-display text-3xl text-white mt-1">
-          Radio Klassik
-        </h2>
-        <p className="text-white/70 text-sm leading-relaxed mt-4">
-          Spin the world and tune into classical music broadcasters
-          everywhere — from Mozart at dawn in Vienna to late-night
-          chamber music in Tokyo. Built as an homage to{" "}
-          <a
-            href="https://radio.garden/"
-            target="_blank"
-            rel="noreferrer"
-            className="underline hover:text-gold-400"
-          >
-            radio.garden
-          </a>
-          , dedicated entirely to the classical canon.
+        <h2 className="font-display text-3xl text-white mt-1">Radio Klassik</h2>
+        <p className="text-white/75 text-sm leading-relaxed mt-4">
+          A classical radio station explorer, built by a designer who loves
+          classical music.
         </p>
+        <ul className="mt-5 space-y-2.5 text-sm">
+          <li>
+            <a
+              href="https://www.threads.com/@iwjong"
+              target="_blank"
+              rel="noreferrer"
+              className="text-white/80 underline decoration-white/25 underline-offset-2 hover:text-gold-400 hover:decoration-gold-400/60 break-all"
+            >
+              https://www.threads.com/@iwjong
+            </a>
+          </li>
+          <li>
+            <span className="text-white/45">Bug reports: </span>
+            <a
+              href="mailto:inwon@freninc.com"
+              className="text-white/80 underline decoration-white/25 underline-offset-2 hover:text-gold-400 hover:decoration-gold-400/60"
+            >
+              inwon@freninc.com
+            </a>
+          </li>
+          <li>
+            <a
+              href={`${import.meta.env.BASE_URL}quote-generator.html`}
+              className="text-white/80 underline decoration-white/25 underline-offset-2 hover:text-gold-400 hover:decoration-gold-400/60"
+            >
+              Music quote pool (preview & export)
+            </a>
+          </li>
+        </ul>
         <div className="mt-6 grid grid-cols-2 gap-3 text-xs text-white/60">
           <Shortcut k="Space" v="Play / pause" />
           <Shortcut k="← / →" v="Prev / next" />
           <Shortcut k="↑ / ↓" v="Volume" />
-          <Shortcut k="F" v="Favorite" />
+          <Shortcut k="M" v="Focus mode" />
           <Shortcut k="/  or  S" v="Search" />
           <Shortcut k="L" v="Library" />
         </div>
-        <p className="text-white/40 text-[11px] mt-6">
-          Stations are sourced live from{" "}
-          <a
-            href="https://www.radio-browser.info/"
-            target="_blank"
-            rel="noreferrer"
-            className="underline hover:text-gold-400"
-          >
-            Radio Browser
-          </a>{" "}
-          and curated by tag. Streams are served directly from each
-          broadcaster — please respect their terms.
-        </p>
         <div className="mt-6 flex justify-end">
-          <button onClick={onClose} className="btn-primary">
+          <button type="button" onClick={onClose} className="btn-primary">
             Close
           </button>
         </div>

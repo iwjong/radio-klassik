@@ -26,10 +26,10 @@ The map is built with the **[Maps JavaScript API](https://developers.google.com/
 - **Classical-only catalogue** — [Radio Browser](https://www.radio-browser.info/) with strict scoring and exclusions for non-classical noise.
 - **Player** — play/pause, previous/next, volume, Focus Mode, now-playing metadata handling.
 - **Curated stations** — verified labels, editorial copy, preferred coordinates where applicable.
-- **Favorites and recent** — persisted in `localStorage` (Zustand persist key `radio-klassik-v1`).
+- **Recent plays** — persisted in `localStorage` (Zustand persist key `radio-klassik-v1`).
 - **Search** — station name, country, code, tag; open with `/` or `S`.
-- **Library** — favorites, recently played, top voted, grouped by country.
-- **Keyboard** — `Space` play/pause, `←` / `→` station, `↑` / `↓` volume, `F` favorite, `/` or `S` search, `L` library, `Escape` closes panels.
+- **Library** — recently played, top voted, grouped by country.
+- **Keyboard** — `Space` play/pause, `←` / `→` station, `↑` / `↓` volume, `M` focus mode, `/` or `S` search, `L` library, `Escape` closes panels.
 - **Geocoding** — stations missing coordinates are placed on a country centroid with deterministic jitter to reduce overlap.
 
 ## Tech stack

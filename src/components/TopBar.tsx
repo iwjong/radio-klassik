@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from "react";
+import { getTopBarQuote, pickRandomMusicQuote } from "../lib/musicQuotes";
 import { useStore } from "../store/useStore";
 
 interface Props {
@@ -11,19 +13,30 @@ export function TopBar({ onOpenSearch, onOpenLibrary, onOpenAbout }: Props) {
   const loading = useStore((s) => s.loading);
   const showLegacyStreams = useStore((s) => s.showLegacyStreams);
   const setShowLegacyStreams = useStore((s) => s.setShowLegacyStreams);
+  const currentStationId = useStore((s) => s.currentStationId);
+
+  const [quote, setQuote] = useState(() => getTopBarQuote());
+  const lastStationIdRef = useRef<string | null | undefined>(undefined);
+
+  useEffect(() => {
+    if (lastStationIdRef.current === undefined) {
+      lastStationIdRef.current = currentStationId;
+      return;
+    }
+    if (lastStationIdRef.current !== currentStationId) {
+      lastStationIdRef.current = currentStationId;
+      setQuote(pickRandomMusicQuote());
+    }
+  }, [currentStationId]);
 
   return (
     <div className="pointer-events-auto flex justify-center px-3 sm:px-6 pt-3 sm:pt-4">
-      <div className="top-bar-dock flex w-full max-w-[min(1120px,calc(100vw-1.5rem))] items-center justify-between gap-3 rounded-xl px-4 py-3 sm:gap-4 sm:px-5 sm:py-3.5">
+      <div className="top-bar-dock flex w-full max-w-[min(1120px,calc(100vw-1.5rem))] items-center justify-between gap-3 px-4 py-3 sm:gap-4 sm:px-5 sm:py-3.5">
         <div className="flex min-w-0 flex-1 items-center gap-3 select-none">
-          <div className="min-w-0 leading-tight">
-            <div className="font-display text-2xl tracking-wide gradient-text drop-shadow-[0_1px_12px_rgba(0,0,0,0.45)]">
-              Radio Klassik
-            </div>
-            <div className="text-[10px] uppercase tracking-[0.28em] text-white/62">
-              Spatial classical listening
-            </div>
-          </div>
+          <p className="min-w-0 font-serif text-xs sm:text-sm leading-relaxed tracking-[0.01em] text-white/72">
+            <span className="block not-italic">“{quote.text}”</span>
+            <span className="mt-0.5 block italic text-white/58">{quote.author}</span>
+          </p>
         </div>
 
         <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">

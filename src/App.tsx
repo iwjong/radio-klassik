@@ -175,7 +175,7 @@ function LoadingOverlay() {
 function EmptyOverlay() {
   return (
     <div className="absolute inset-0 z-20 grid place-items-center bg-ink-950/25 backdrop-blur-[2px]">
-      <div className="glass-strong rounded-lg p-7 max-w-sm text-center">
+      <div className="glass-strong p-7 max-w-sm text-center">
         <div className="text-[10px] tracking-[0.3em] uppercase text-gold-400/80">
           Curated stations
         </div>
@@ -200,7 +200,7 @@ function ErrorOverlay({
 }) {
   return (
     <div className="absolute inset-0 z-20 grid place-items-center bg-ink-950/35 backdrop-blur-[2px]">
-      <div className="glass-strong rounded-lg p-8 max-w-sm text-center">
+      <div className="glass-strong p-8 max-w-sm text-center">
         <div className="text-[10px] tracking-[0.3em] uppercase text-red-400/80">
           Connection lost
         </div>

@@ -3,16 +3,15 @@ import { useStore } from "../store/useStore";
 import type { Station } from "../lib/types";
 import { countryName } from "../lib/geo";
 
-type Tab = "favorites" | "recent" | "top" | "byCountry";
+type Tab = "recent" | "top" | "byCountry";
 
 interface Props {
   onClose: () => void;
 }
 
 export function Library({ onClose }: Props) {
-  const [tab, setTab] = useState<Tab>("favorites");
+  const [tab, setTab] = useState<Tab>("recent");
   const stations = useStore((s) => s.stations);
-  const favorites = useStore((s) => s.favorites);
   const recent = useStore((s) => s.recent);
   const currentId = useStore((s) => s.currentStationId);
   const selectStation = useStore((s) => s.selectStation);
@@ -37,10 +36,6 @@ export function Library({ onClose }: Props) {
 
   const list: Station[] = useMemo(() => {
     switch (tab) {
-      case "favorites":
-        return favorites
-          .map((id) => byId.get(id))
-          .filter((s): s is Station => !!s);
       case "recent":
         return recent.map((id) => byId.get(id)).filter((s): s is Station => !!s);
       case "top":
@@ -64,37 +59,40 @@ export function Library({ onClose }: Props) {
         throw new Error(`Unhandled tab: ${String(_exhaustive)}`);
       }
     }
-  }, [tab, favorites, recent, stations, byId]);
+  }, [tab, recent, stations, byId]);
 
   return (
     <div
-      className="fixed top-0 right-0 bottom-0 w-[min(420px,92vw)] z-30 animate-fade-in"
+      className="fixed inset-0 z-40 animate-fade-in"
+      onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-label="Station library"
     >
-      <div className="h-full glass-strong border-l border-white/[0.07] flex flex-col">
-        <div className="flex items-center justify-between px-5 pt-5 pb-4">
-          <div>
-            <div className="text-[10px] tracking-[0.3em] text-gold-400/80 uppercase">
+      <div
+        className="absolute top-[max(5.5rem,env(safe-area-inset-top)+4.5rem)] sm:top-24 left-1/2 -translate-x-1/2 w-[min(660px,92vw)] max-h-[min(75vh,calc(100dvh-7rem))] panel-modal shadow-soft overflow-hidden flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between gap-3 px-5 pt-4 pb-3 border-b border-white/[0.06] shrink-0">
+          <div className="min-w-0">
+            <div className="text-[10px] tracking-[0.3em] text-gold-400/90 uppercase">
               Library
             </div>
-            <div className="font-display text-2xl leading-tight text-white">
-              Your Radio Klassik
+            <div className="font-display text-2xl leading-tight text-white truncate">
+              Stations
             </div>
           </div>
           <button
-            className="text-white/60 hover:text-white text-xl w-8 h-8 grid place-items-center rounded hover:bg-white/5"
+            className="text-white/60 hover:text-white text-xl w-9 h-9 shrink-0 grid place-items-center rounded-lg hover:bg-white/5"
             onClick={onClose}
-            title="Close (L)"
+            title="Close (Esc)"
           >
             ×
           </button>
         </div>
-        <div className="px-5 pb-3 flex flex-wrap gap-1 text-xs">
+        <div className="px-5 py-3 flex flex-wrap gap-1 text-xs border-b border-white/[0.045] shrink-0">
           {(
             [
-              ["favorites", "Favorites"],
               ["recent", "Recent"],
               ["top", "Top voted"],
               ["byCountry", "By country"],
@@ -107,14 +105,14 @@ export function Library({ onClose }: Props) {
                 "px-3 py-1.5 rounded-md transition " +
                 (tab === k
                   ? "bg-gold-400/90 text-ink-950"
-                  : "text-white/60 hover:text-white hover:bg-white/5")
+                  : "text-white/65 hover:text-white hover:bg-white/5")
               }
             >
               {label}
             </button>
           ))}
         </div>
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 min-h-0 overflow-y-auto">
           {list.length === 0 ? (
             <EmptyState tab={tab} />
           ) : tab === "byCountry" ? (
@@ -168,9 +166,9 @@ function GroupedByCountry({
     <div>
       {groups.map((g) => (
         <div key={g.code}>
-          <div className="px-5 py-2 text-[10px] tracking-[0.25em] uppercase text-white/[0.38] sticky top-0 bg-ink-900/50 backdrop-blur">
+          <div className="library-section-header px-5 py-2 text-[10px] tracking-[0.25em] uppercase text-white/55 sticky top-0 z-10 border-b border-white/[0.06]">
             {g.country}
-            <span className="ml-2 text-white/25">{g.stations.length}</span>
+            <span className="ml-2 text-white/35">{g.stations.length}</span>
           </div>
           {g.stations.map((s) => (
             <StationRow
@@ -195,43 +193,21 @@ function StationRow({
   active: boolean;
   onClick: () => void;
 }) {
-  const toggleFavorite = useStore((st) => st.toggleFavorite);
-  const isFav = useStore((st) => st.favorites.includes(s.id));
-
   return (
     <div
       className={
-        "group flex items-center gap-3 px-5 py-2.5 border-b border-white/[0.025] cursor-pointer transition " +
-        (active ? "bg-white/[0.045]" : "hover:bg-white/[0.025]")
+        "flex items-center gap-3 px-5 py-2.5 border-b border-white/[0.06] cursor-pointer transition " +
+        (active ? "bg-white/[0.06]" : "hover:bg-white/[0.04]")
       }
       onClick={onClick}
     >
       <span className="marker-dot w-1 h-1 rounded-full shrink-0" />
       <div className="flex-1 min-w-0">
-        <div className="text-sm text-white truncate">{s.name}</div>
-        <div className="text-[11px] text-white/40 truncate">
+        <div className="text-sm text-white/95 truncate">{s.name}</div>
+        <div className="text-[11px] text-white/50 truncate">
           {stationSubtitle(s)}
         </div>
       </div>
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          toggleFavorite(s.id);
-        }}
-        className="opacity-0 group-hover:opacity-100 text-white/40 hover:text-gold-400"
-        title={isFav ? "Remove favorite" : "Add to favorites"}
-      >
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill={isFav ? "#e9c46a" : "none"}
-          stroke="currentColor"
-          strokeWidth="2"
-        >
-          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-        </svg>
-      </button>
     </div>
   );
 }
@@ -249,13 +225,12 @@ function stationSubtitle(station: Station): string {
 
 function EmptyState({ tab }: { tab: Tab }) {
   const msg: Record<Tab, string> = {
-    favorites: "Tap the heart icon next to a station to save it here.",
     recent: "Stations you play will appear here.",
     top: "Top stations are loading…",
     byCountry: "Loading stations by country…",
   };
   return (
-    <div className="px-6 py-16 text-center text-white/40 text-sm">
+    <div className="px-6 py-16 text-center text-white/50 text-sm leading-relaxed">
       {msg[tab]}
     </div>
   );
