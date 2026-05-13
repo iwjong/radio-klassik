@@ -2,6 +2,8 @@
 
 Classical radio on a **map-first** UI (inspired by [Radio Garden](https://radio.garden/)): pick a station from **Google Maps**, stream via [Radio Browser](https://www.radio-browser.info/). Built with **Vite**, **React 19**, **TypeScript**, and **Tailwind CSS**.
 
+**Live:** [https://iwjong.github.io/radio-klassik](https://iwjong.github.io/radio-klassik)
+
 ## Features
 
 - **Map** — Hybrid satellite + labels, custom dock-style markers, selected marker can show now-playing lines when stream metadata exists. Map keyboard shortcuts are off so **arrow keys** change stations.
