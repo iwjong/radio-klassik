@@ -67,6 +67,12 @@ Optional: `VITE_GOOGLE_MAPS_MAP_ID` — only relevant if you later move to vecto
 - `npm run lint` — ESLint
 - `npm run test` — Vitest unit tests
 
+## Deployment (Git / static hosting)
+
+This app ships as static files from `dist/` after `npm run build`. For **GitHub Pages** (including `https://<user>.github.io/<repo>/`), **Google Maps API key** setup, and other hosts, see **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**.
+
+The repo includes **[`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml)** — set the repository secret `VITE_GOOGLE_MAPS_API_KEY` and choose **GitHub Actions** as the Pages build source in repository settings.
+
 ## How stations are picked
 
 `src/lib/radioBrowser.ts` talks to Radio Browser mirrors with fallback, then scores candidates:
